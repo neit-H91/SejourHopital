@@ -2,15 +2,33 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <title>{% block title %}Welcome!{% endblock %}</title>
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text></svg>">
-        {% block stylesheets %}
-            {{ ux_controller_link_tags() }}
-        {% endblock %}
+        <div class="bg-slate-500 h-auto flex flex-row p-5">
+            <div class="p-1">
+                <a href={{ path("app_principale")}} class="text-white text-2xl hover:text-orange-500">Accueil</a>
+            </div>
+            <div class="p-1">
+                {% if is_granted('ROLE_INFIRMIER') %}
+                        <a href={{path('app_sejour_sorties')}} class="text-white text-2xl hover:text-orange-500">Sorties</a>
+                        <a href={{path('app_sejour_date')}} class="text-white text-2xl hover:text-orange-500">Séjours d'une date</a>
+                        <a href={{path('app_sejour_a_venir')}} class="text-white text-2xl hover:text-orange-500">Séjours à venir</a>
+                {% endif %}
+            </div>
+
+            <div class="ml-auto">
+            {% if app.user %}
+                <a href={{ path("app_logout")}} class="text-white text-2xl hover:text-orange-500">Deconnexion</a>
+            {% elseif not app.user %}
+                <a href={{ path("app_login")}} class="text-white text-2xl hover:text-orange-500">Connexion</a>
+            {% endif %}
+            </div>
+
+        </div>
 
         {% block javascripts %}
-{% block importmap %}{{ importmap('app') }}{% endblock %}
+        <script src="https://cdn.tailwindcss.com"></script>
         {% endblock %}
+
+        
     </head>
     <body>
         {% block body %}{% endblock %}

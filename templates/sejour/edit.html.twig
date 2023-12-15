@@ -1,0 +1,13 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edit Sejour{% endblock %}
+
+{% block body %}
+    <h1>Edit Sejour</h1>
+
+    {{ include('sejour/_form.html.twig', {'button_label': 'Update'}) }}
+
+    <a href="{{ path('app_sejour_index') }}">back to list</a>
+
+    {{ include('sejour/_delete_form.html.twig') }}
+{% endblock %}

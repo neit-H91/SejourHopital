@@ -1,0 +1,11 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des patients{% endblock %}
+
+{% block body %}
+
+{{ form_start(formValiderSejour) }}
+    <button type="submit">Enregistrer</button>
+{{ form_end(formValiderSejour) }}
+
+{% endblock %}
