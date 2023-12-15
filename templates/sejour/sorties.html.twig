@@ -4,8 +4,6 @@
 
 {% block body %}
 
-<h1>Service<h1>
-{{ service }}
 
 <h1>Séjours en cours</h1>
 
@@ -21,7 +19,9 @@
     
         {% for s in lesSejours %}
             <tr>
-                <td>{{ s.patient_id }}</td>
+                <td>
+                    {{ s.patient_id }}
+                </td>
                 <td>{{ s.lit_id }}</td>
                 <td><a href="{{ path('app_valider_sorties', {id: s.id}) }}">Sortir</a></td>
             </tr>
