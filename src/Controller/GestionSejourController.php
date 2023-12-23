@@ -14,15 +14,13 @@ use App\Form\SortieSejourType;
 use App\Form\DateFormType;
 use DateTime;
 use DateTimeZone;
-
-
-
+use Knp\Component\Pager\PaginatorInterface;
 
 class GestionSejourController extends AbstractController
 {
     //obtention des sejours effectif dans le cadre d'une sortie
     #[Route('/sejour/sorties', name: 'app_sejour_sorties')]
-    public function sorties(SejourRepository $sejourRepository): Response
+    public function sorties(SejourRepository $sejourRepository,Request $request,PaginatorInterface $paginator): Response
     {
         // Récupérer l'utilisateur actuellement authentifié
         $user = $this->getUser();
@@ -32,13 +30,17 @@ class GestionSejourController extends AbstractController
             // Accéder aux propriétés de l'utilisateur
             $service = $user->getLeService()->getId();
 
-            //recuperation des sejours en cours
-            $lesSejours=$sejourRepository->findOnGoingSejour($service);
+            //recuperation des séjours et pagination
+            $pagination=$paginator->paginate(
+                $sejourRepository->findOnGoingSejour($service),
+                $request->query->get('page',1),
+                10
+            );
 
             //appel de la vue
             return $this->render('sejour/sorties.html.twig', [
-                'lesSejours'=>$lesSejours,
-                'service'=>$service
+                'service'=>$service,
+                'pagination'=>$pagination
             ]);
         } else {
                 // L'utilisateur n'est pas connecté, rediriger vers la page de connexion par exemple
@@ -51,80 +53,156 @@ class GestionSejourController extends AbstractController
     #[Route('/sejour/sortie/{id}', name: 'app_valider_sorties')]
     public function valid(ManagerRegistry $doctrine,$id, Request $request,EntityManagerInterface $em): Response
     {
+        //date du jour
+        $date=new DateTime();
 
-        //récupération du Sejour 
-        $repo=$doctrine->getRepository(Sejour::class);
-        $leSejour=$repo->find($id);
-       
-        //création du form
-        $formValiderSejour=$this->createForm(SortieSejourType::class,$leSejour);
+        // Set the timezone to "Europe/Paris"
+        $date->setTimezone(new DateTimeZone('Europe/Paris'));
 
-        //traiter la requete du form
-        $formValiderSejour->handleRequest($request);
+        // Récupérer l'utilisateur actuellement authentifié
+        $user = $this->getUser();
+
+        // Vérifier si l'utilisateur est connecté
+        if ($user) {
+            // récuperation du service de l'utilisateur
+            $service = $user->getLeService()->getId();
+
+            //récupération du Sejour 
+            $repo=$doctrine->getRepository(Sejour::class);
+            $leSejour=$repo->find($id);
+
+            //si le service de l'utilisateur et du sejour sont le même on autorise l'accès aux informations
+            if ($service == $leSejour->getLeLit()->getLaChambre()->getLeService()->getId()){
+                //création du form
+                $formValiderSejour=$this->createForm(SortieSejourType::class,$leSejour);
+
+                //traiter la requete du form
+                $formValiderSejour->handleRequest($request);
 
 
-        //verification formulaire et changement des données
-        if ($formValiderSejour->isSubmitted() && $formValiderSejour->isValid()) {
-            //enregistrement des modifications
-            $em->persist($leSejour);
-            $em->flush();
+                // vérification formulaire et changement des données
+                if ($formValiderSejour->isSubmitted() && $formValiderSejour->isValid()) {
+                    //on définit la date de fin de séjour à la date du jour
+                    $leSejour->setDateFin($date);
 
-            //redirection
-            return $this->redirectToRoute('app_sejour_sorties');
+                    // enregistrement des modifications
+                    $em->persist($leSejour);
+                    $em->flush();
+
+                    //redirection vers la liste des séjours actuels
+                    return $this->redirectToRoute('app_sejour_sorties');
+                }
+
+                
+           
+                }
+
+                //appel de la vue
+                return $this->render('sejour/validerSortie.html.twig', [
+                    'formValiderSejour'=>$formValiderSejour,
+                    'leSejour'=>$leSejour
+                ]);
+        } else {
+            // L'utilisateur n'est pas connecté, rediriger vers la page de connexion par exemple
+            return $this->redirectToRoute('app_login');
         }
-        return $this->render('sejour/validerSortie.html.twig', [
-            'formValiderSejour'=>$formValiderSejour,
-        ]);
+
     }
 
     //obtenir les sejours d'une date donnée
     #[Route('/sejour/date', name: 'app_sejour_date')]
-    public function gestionDateDonnee(SejourRepository $sejourRepository,Request $request): Response
+    public function gestionDateDonnee(SejourRepository $sejourRepository,Request $request,PaginatorInterface $paginator): Response
     {
+        //date du jour
+        $date=new DateTime('now');
 
-       //date du jour
-       $date=new DateTime();
+        // Set the timezone to "Europe/Paris"
+        $date->setTimezone(new DateTimeZone('Europe/Paris'));
 
-       // Set the timezone to "Europe/Paris"
-       $date->setTimezone(new DateTimeZone('Europe/Paris'));
+        //changement du format pour la requete 
+        $date=$date->format('Y/m/d');
 
-       //récuperation des sejours d'aujourd'hui
-       $lesSejours = $sejourRepository->findSejoursDate($date);
+        // Récupérer l'utilisateur actuellement authentifié
+        $user = $this->getUser();
 
-       //création du form
-       $form=$this->createForm(DateFormType::class);
+        // Vérifier si l'utilisateur est connecté
+        if ($user) {
+            // récuperation du service de l'utilisateur
+            $service = $user->getLeService()->getId();
 
-       //traiter la requete du form
-       $form->handleRequest($request);
+            //récuperation des sejours d'aujourd'hui
+            $lesSejours = $sejourRepository->findSejoursDate($date,$service);
 
-       //on verifie que le formulaire a été correctement soumis
-       if ($form->isSubmitted() && $form->isValid()) {
+            //recuperation des séjours et pagination
+            $pagination=$paginator->paginate(
+                $sejourRepository->findSejoursDate($date,$service),
+                $request->query->get('page',1),
+                10
+            );
 
-           //récupération de la date saisie
-           $selectedDate = $form->get('Date')->getData();
+            //création du form
+            $form=$this->createForm(DateFormType::class);
 
+            //traiter la requete du form
+            $form->handleRequest($request);
 
-           $lesSejours = $sejourRepository->findSejoursDate($selectedDate);
-       }
+            //on verifie que le formulaire a été correctement soumis
+            if ($form->isSubmitted() && $form->isValid()) {
 
+                //récupération de la date saisie
+                $date = $form->get('Date')->getData();
+
+                //recuperation des séjours à la date souhaitée et pagination
+                $pagination=$paginator->paginate(
+                $sejourRepository->findSejoursDate($date,$service),
+                $request->query->get('page',1),
+                10
+            );
+            }
+        } else {
+            // L'utilisateur n'est pas connecté, rediriger vers la page de connexion par exemple
+            return $this->redirectToRoute('app_login');
+        }
        //appel de la vue
        return $this->render('sejour/sejoursEnCours.html.twig', [
-           'lesSejours'=>$lesSejours,
-           'form'=>$form
+            'pagination'=>$pagination,
+            'form'=>$form,
+            'date'=>$date
        ]);
     }
+       
 
     //Obtenir les sejours à venir
     #[Route('/sejour/aVenir', name: 'app_sejour_a_venir')]
-    public function gestionSejourAVenir(SejourRepository $sejourRepository): Response
+    public function gestionSejourAVenir(SejourRepository $sejourRepository,PaginatorInterface $paginator, Request $request): Response
     {
-        //récuperation des sejours à venir
-        $lesSejours = $sejourRepository->findSejoursAVenir();
+        // Récupérer l'utilisateur actuellement authentifié
+        $user = $this->getUser();
 
-        //appel de la vue
-        return $this->render('sejour/sejourAVenir.html.twig', [
-            'lesSejours'=>$lesSejours,
-        ]);
+        // Vérifier si l'utilisateur est connecté
+        if ($user) {
+            // Accéder aux propriétés de l'utilisateur
+            $service = $user->getLeService()->getId();
 
+
+            //recuperation des séjours à la date souhaitée et pagination
+            $pagination=$paginator->paginate(
+                $sejourRepository->findSejoursAVenir($service),
+                $request->query->get('page',1),
+                10
+            );
+
+            //libelle du service
+            $service = $user->getLeService()->getLibelle();
+
+            //appel de la vue
+            return $this->render('sejour/sejourAVenir.html.twig', [
+                'pagination'=>$pagination,
+                'service' => $service
+            ]);
+        } else {
+                // L'utilisateur n'est pas connecté, rediriger vers la page de connexion par exemple
+                return $this->redirectToRoute('app_login');
+            }
     }
 }

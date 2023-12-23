@@ -14,69 +14,30 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/sejour')]
 class SejourController extends AbstractController
 {
-    #[Route('/', name: 'app_sejour_index', methods: ['GET'])]
-    public function index(SejourRepository $sejourRepository): Response
-    {
-        return $this->render('sejour/index.html.twig', [
-            'sejours' => $sejourRepository->findAll(),
-        ]);
-    }
-
-    #[Route('/new', name: 'app_sejour_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
-    {
-        $sejour = new Sejour();
-        $form = $this->createForm(SejourType::class, $sejour);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->persist($sejour);
-            $entityManager->flush();
-
-            return $this->redirectToRoute('app_sejour_index', [], Response::HTTP_SEE_OTHER);
-        }
-
-        return $this->render('sejour/new.html.twig', [
-            'sejour' => $sejour,
-            'form' => $form,
-        ]);
-    }
 
     #[Route('/{id}', name: 'app_sejour_show', methods: ['GET'])]
     public function show(Sejour $sejour): Response
     {
-        return $this->render('sejour/show.html.twig', [
-            'sejour' => $sejour,
-        ]);
-    }
+        // Récupérer l'utilisateur actuellement authentifié
+        $user = $this->getUser();
 
-    #[Route('/{id}/edit', name: 'app_sejour_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Sejour $sejour, EntityManagerInterface $entityManager): Response
-    {
-        $form = $this->createForm(SejourType::class, $sejour);
-        $form->handleRequest($request);
+        // Vérifier si l'utilisateur est connecté
+        if ($user) {
+            // récuperation du service de l'utilisateur
+            $service = $user->getLeService()->getId();
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->flush();
-
-            return $this->redirectToRoute('app_sejour_index', [], Response::HTTP_SEE_OTHER);
+            //si le service de l'utilisateur et du sejour sont le même on autorise l'accès aux informations
+            if ($service == $sejour->getLeLit()->getLaChambre()->getLeService()->getId()){
+                return $this->render('sejour/show.html.twig', [
+                    'sejour' => $sejour,
+                ]);
+            } else {
+                return $this->redirectToRoute('app_principale');
+            }
         }
 
-        return $this->render('sejour/edit.html.twig', [
-            'sejour' => $sejour,
-            'form' => $form,
-        ]);
-    }
 
-    #[Route('/{id}', name: 'app_sejour_delete', methods: ['POST'])]
-    public function delete(Request $request, Sejour $sejour, EntityManagerInterface $entityManager): Response
-    {
-        if ($this->isCsrfTokenValid('delete'.$sejour->getId(), $request->request->get('_token'))) {
-            $entityManager->remove($sejour);
-            $entityManager->flush();
-        }
-
-        return $this->redirectToRoute('app_sejour_index', [], Response::HTTP_SEE_OTHER);
+        
     }
 
 }

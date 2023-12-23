@@ -1,7 +1,20 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Gestion des patients{% endblock %}
+{% block title %}Accueil{% endblock %}
 
 {% block body %}
+
+<div class="w-screen h-[calc(100vh-80px)] flex flex-col  items-center ">
+    <div class="w-1/2 h-1/2 flex flex-col justify-evenly items-center">
+        <div>
+            <h1 class="bg-slate-700 px-8 py-4 rounded-lg w-fit text-6xl text-white">Accueuil</h1>
+        </div>
+        <div class="flex flex-col justify-evenly items-center w-full">
+            <p class="text-slate-700 text-3xl">Bienvenu infirmier.e {{ app.user.getNom() }} dans votre application de gestion</p>
+            <p class="text-slate-700 text-3xl">Nous sommes le {{ date|date('d/m/Y') }}</p>
+        </div>
+    </div>
+    
+</div>
 
 {% endblock %}

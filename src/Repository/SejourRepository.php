@@ -30,7 +30,7 @@ class SejourRepository extends ServiceEntityRepository
         $entityManager=$this->getEntityManager();
 
         $query = $entityManager->createQuery(
-            'SELECT s.id, l.id as lit_id, p.id as patient_id, s.dateDebut, s.dateFin, s.commentaire, s.estArrive, s.estParti
+            'SELECT s.id, l.libelle as lit_libelle, p.nom as patient_nom, s.dateDebut, s.dateFin, s.commentaire, s.estArrive, s.estParti
             FROM App\Entity\Sejour s
             JOIN s.leLit l
             JOIN s.lePatient p
@@ -47,42 +47,58 @@ class SejourRepository extends ServiceEntityRepository
 
     }
 
-    //fonction qui retourne les sejours à une certaine date
-    public function findSejoursDate($date)
+    //fonction qui retourne les sejours actif à une certaine date
+    public function findSejoursDate($date, $serviceId)
     {
-        $modifiedDate = clone $date;
-    
-        return $this->createQueryBuilder('s')
-            ->andWhere('s.dateDebut >= :todayStart')
-            ->andWhere('s.dateDebut < :tomorrowStart')
-            ->andWhere('s.estParti = :estParti')
-            ->andWhere('s.estArrive = :isArrive')
-            ->setParameter('todayStart', $date->format('Y-m-d 00:00:00'))
-            ->setParameter('tomorrowStart', $modifiedDate->modify('+1 day')->format('Y-m-d 00:00:00'))
-            ->setParameter('isArrive', 1)
-            ->setParameter('estParti', 0)
-            ->getQuery()
-            ->getResult();
+        $entityManager = $this->getEntityManager();
+
+        $query = $entityManager->createQuery(
+            'SELECT s.id, l.libelle as lit_libelle, p.nom as patient_nom, s.dateDebut, s.dateFin, s.commentaire, s.estArrive, s.estParti
+            FROM App\Entity\Sejour s
+            JOIN s.leLit l
+            JOIN s.lePatient p
+            JOIN l.laChambre c
+            JOIN c.leService service
+            WHERE service.id = :serviceId
+            AND s.dateDebut <= :date
+            AND s.dateFin >= :date
+            AND s.estArrive = 1
+            AND s.estParti = 0'
+        );
+
+        $query->setParameter('serviceId', $serviceId);
+        $query->setParameter('date', $date);
+
+        return $query->getResult();
     }
 
     //fonction qui retourne les séjours à venir
-    public function findSejoursAVenir(){
+    public function findSejoursAVenir($serviceId){
         //date du jour
         $today=new DateTime();
 
         // Set the timezone to "Europe/Paris"
         $today->setTimezone(new DateTimeZone('Europe/Paris'));
 
-        //recuperation des sejours
-        return $this->createQueryBuilder('s')
-            ->andWhere('s.dateDebut >=:today')
-            ->andWhere('s.estArrive = :isArrive')
-            ->andWhere('s.estParti = :estParti')
-            ->setParameter('today',$today->format('Y-m-d 00:00:00'))
-            ->setParameter('isArrive', 0)
-            ->setParameter('estParti', 0)
-            ->getQuery()
-            ->getResult();
+        $entityManager = $this->getEntityManager();
+
+        $query = $entityManager->createQuery(
+            'SELECT s.id, l.libelle as lit_libelle, p.nom as patient_nom, s.dateDebut, s.dateFin, s.commentaire, s.estArrive, s.estParti
+            FROM App\Entity\Sejour s
+            JOIN s.leLit l
+            JOIN s.lePatient p
+            JOIN l.laChambre c
+            JOIN c.leService service
+            WHERE service.id = :serviceId
+            AND s.dateDebut >= :date
+            AND s.estArrive = 0
+            AND s.estParti = 0'
+        );
+
+        $query->setParameter('serviceId', $serviceId);
+        $query->setParameter('date', $today);
+
+        return $query->getResult();
     }
 
 //    /**

@@ -22,11 +22,11 @@ class SejourType extends AbstractType
             ->add('estParti')
             ->add('leLit', EntityType::class, [
                 'class' => Lit::class,
-'choice_label' => 'id',
+'choice_label' => 'libelle',
             ])
             ->add('lePatient', EntityType::class, [
                 'class' => User::class,
-'choice_label' => 'id',
+'choice_label' => 'nom',
             ])
         ;
     }
@@ -35,6 +35,7 @@ class SejourType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => Sejour::class,
+            'csrf_protection' => false,
         ]);
     }
 }

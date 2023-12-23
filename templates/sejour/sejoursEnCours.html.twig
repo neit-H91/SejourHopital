@@ -4,34 +4,61 @@
 
 {% block body %}
 
-{{ form_start(form) }}
-    <button type="submit">Enregistrer</button>
-{{ form_end(form) }}
+<div class="w-screen h-[calc(100vh-80px)] flex flex-col  items-center ">
+    {% if pagination.getTotalItemCount() > 0 %}
+        <h1 class="text-slate-700 text-3xl py-2 font-bold">Séjours actifs du - {{ date|date('Y/m/d') }}</h1>
+        <h1 class="text-slate-700 text-xl py-2 font-bold">Sélectionnez la date souhaitée</h1>
+        
+        {{ form_start(form) }}
+            <div class="flex flex-col items-center h-fit py-2">
+                {{ form_row(form.Date) }}
+                <button type="submit" class="text-white bg-slate-500 py-2 px-4 rounded-lg w-fit">Enregistrer</button>
+            </div>
+        {{ form_end(form) }}
+        
+        
 
-<h1>Gestion des séjours</h1>
-<table>
-    <thead>
-        <tr>
-            <th>Patient</th>
-            <th>Date début</th>
-            <th>Date Fin</th>
-            <th>Lit</th>
-            <th>Commentaire</th>
-            <th>Modifier</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for s in lesSejours %}
-            <tr>
-                <td>{{ s.lePatient.getNom }}</td>
-                <td>{{ s.dateDebut|date('Y-m-d') }}</td>
-                <td>{{ s.dateFin|date('Y-m-d') }}</td>
-                <td>{{ s.leLit.getLibelle }}</td>
-                <td>{{ s.commentaire }}
-                <td><a href="{{ path('app_sejour_edit', {id: s.id}) }}">Modifier</a></td>
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
+
+        <table class="shadow-2xl border-2 py-2 border-slate-700 w-6/12">
+                <thead class="text-white">
+                    <tr>
+                        <th class="py-3 bg-slate-700 text-2xl">Patient</th>
+                        <th class="py-3 bg-slate-700 text-2xl">Lit</th>
+                        <th class="py-3 bg-slate-700 text-2xl">Date début</th>
+                        <th class="py-3 bg-slate-700 text-2xl">Commentaire</th>
+                        <th class="py-3 bg-slate-700 text-2xl">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="text-white text-center">
+                
+                    {% for s in pagination %}
+                        <tr class="bg-slate-500 border-2 border-slate-700">
+                            <td class="py-3 px-6">
+                                {{ s.patient_nom }}
+                            </td>
+                            <td class="py-3 px-6 text-xl">{{ s.lit_libelle }}</td>
+                            <td class="py-3 px-6 text-xl">{{ s.dateDebut|date('Y-m-d') }}</td>
+                            <td class="py-3 px-6 text-xl">{{ s.commentaire }}
+                            <td class="py-3 px-6 text-xl transition ease-in-out hover:text-orange-500"><a href="{{ path('app_sejour_show', {id: s.id}) }}">Détails</a></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="py-4">
+                {{ knp_pagination_render(pagination,'/components/_pagination.html.twig') }}
+            </div>
+        {% else %}
+            <h1 class="text-slate-700 text-3xl py-4 font-bold">Il n'y a aucun séjour actif dans ce service à la date du : {{ date|date('Y/m/d') }}</h1>
+            <h1 class="text-slate-700 text-xl py-2 font-bold">Sélectionnez une autre date</h1>
+            {{ form_start(form) }}
+            <div class="flex flex-col items-center h-fit py-2">
+                {{ form_row(form.Date) }}
+                <button type="submit" class="text-white bg-slate-500 py-2 px-4 rounded-lg w-fit">Enregistrer</button>
+            </div>
+        {{ form_end(form) }}
+        {% endif %}
+        
+
+</div>
 
 {% endblock %}

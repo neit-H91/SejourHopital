@@ -1,31 +1,48 @@
-{% extends 'base.html.twig' %}
-
-{% block title %}Log in!{% endblock %}
+<head>
+    {% block javascripts %}
+        <script src="https://cdn.tailwindcss.com"></script>
+    {% endblock %}
+</head>
 
 {% block body %}
-<form method="post">
-    {% if error %}
-        <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
-    {% endif %}
+<div class="w-screen h-screen flex flex-col justify-center items-center bg-slate-700">
+    <div class="w-1/3 h-2/3 bg-slate-500 rounded-lg flex flex-col justify-evenly items-center">
+        <h1 class="text-white text-3xl font-bold w-fit ">Connexion</h1>
+        <form method="post" class="flex flex-col items-center justify-evenly w-full h-1/2">
+            {% if error %}
+                <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+            {% endif %}
 
-    {% if app.user %}
-        <div class="mb-3">
-            You are logged in as {{ app.user.userIdentifier }}, <a href="{{ path('app_logout') }}">Logout</a>
+            {% if app.user %}
+                <div class="mb-3">
+                    You are logged in as {{ app.user.userIdentifier }}, <a href="{{ path('app_logout') }}">Logout</a>
+                </div>
+            {% endif %}
+
+            <div class="">
+                <input class="py-2 px-4 rounded-lg" type="email" value="{{ last_username }}" name="email" id="inputEmail" class="w-full border p-2" autocomplete="email" required autofocus placeholder="Email">
+            </div>
+
+            <div class="">
+                <input class="py-2 px-4 rounded-lg" type="password" name="password" id="inputPassword" class="w-full border p-2" autocomplete="current-password" required placeholder="Mot de passe">
+            </div>
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+            <div>
+                <button class="text-slate-500 bg-white py-2 px-4 rounded-lg" type="submit">
+                    Se connecter
+                </button>
+            </div>
+        </form>
+        <div>
+            <p class="text-white">
+                En cas de mot de passe oublié, veuillez contacter le responsable informatique.
+            </p>
         </div>
-    {% endif %}
+    </div>
+</div>
+</div>
 
-    <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
-    <label for="inputEmail">Email</label>
-    <input type="email" value="{{ last_username }}" name="email" id="inputEmail" class="form-control" autocomplete="email" required autofocus>
-    <label for="inputPassword">Password</label>
-    <input type="password" name="password" id="inputPassword" class="form-control" autocomplete="current-password" required>
 
-    <input type="hidden" name="_csrf_token"
-           value="{{ csrf_token('authenticate') }}"
-    >
 
-    <button class="btn btn-lg btn-primary" type="submit">
-        Sign in
-    </button>
-</form>
 {% endblock %}

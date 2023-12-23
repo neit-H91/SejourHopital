@@ -6,6 +6,7 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
+use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 
 class DateFormType extends AbstractType
 {
@@ -13,10 +14,10 @@ class DateFormType extends AbstractType
     {
         $builder
         ->add('Date', DateType::class, [
-            'label' => 'Sélectionnez une date',
+            'label' => false,
             'widget' => 'single_text',
             'format' => 'yyyy-MM-dd', // Format de la date
-        ]);
+        ])
         ;
     }
 
@@ -24,6 +25,7 @@ class DateFormType extends AbstractType
     {
         $resolver->setDefaults([
             // Configure your form options here
+            'csrf_protection' => false,
         ]);
     }
 }
