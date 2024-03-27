@@ -130,8 +130,6 @@ class GestionSejourController extends AbstractController
             // récuperation du service de l'utilisateur
             $service = $user->getLeService()->getId();
 
-            //récuperation des sejours d'aujourd'hui
-            $lesSejours = $sejourRepository->findSejoursDate($date,$service);
 
             //recuperation des séjours et pagination
             $pagination=$paginator->paginate(
